@@ -16,6 +16,16 @@
 
 ## 进度追踪
 
+> ⏱ **耗时参考（预估，第一轮内测后补真实数据）**
+>
+> | 学习者画像 | 实际/计划周数 | 卡点高发周 |
+> |-----------|:----------:|----------|
+> | 第一次接触状态机思维 | **1.4–1.6x**（7–8 周） | Week 3（LangGraph 状态/条件边） |
+> | React/Redux 老手（状态机直觉强） | **1.1x**（5–6 周） | Week 3（Human-in-the-Loop） |
+> | 写过工作流引擎/状态机 | **1.0x**（5 周） | — |
+>
+> **关键提醒：** Week 3（LangGraph 核心）是整条路线**陡峭度最高的一周**。前端背景在这里是优势——把 LangGraph 的 State 当 Redux store、Node 当 reducer、Conditional Edge 当路由——这套映射建立起来后学习速度会突然变快。卡住时先回去重读 React useReducer/ Zustand 的心智模型。
+
 - [ ] Week 1 - Agent 基础：ReAct 落地
 - [ ] Week 2 - LangChain Agent 生态
 - [ ] Week 3 - LangGraph 核心（重点）

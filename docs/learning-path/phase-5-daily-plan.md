@@ -1127,8 +1127,9 @@ async def run_with_e2b(code: str) -> str:
     execution = sbx.run_code(code)
     return execution.text or execution.error or "(no output)"
 
-# 测试
-print(run_with_e2b("import sys; print(sys.version)"))
+# 测试（async 函数必须用 asyncio.run 触发，直接 print 会得到 coroutine 对象）
+import asyncio
+print(asyncio.run(run_with_e2b("import sys; print(sys.version)")))
 ```
 
 #### 今日任务

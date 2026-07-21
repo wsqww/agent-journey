@@ -1622,17 +1622,24 @@ def sliding_window_messages(messages: list, keep_last_n: int = 10) -> list:
     system_msgs = [m for m in messages if isinstance(m, SystemMessage)]
     non_system = [m for m in messages if not isinstance(m, SystemMessage)]
 
-    # 从后往前累加，直到超出预算
-    kept = []
-    total = 0
-    for msg in reversed(non_system):
-        msg_tokens = len(enc.encode(str(msg.content)))
-        if total + msg_tokens > max_tokens:
-            break
-        kept.insert(0, msg)
-        total += msg_tokens
+    # 永远保留 system，非 system 只留最近 keep_last_n 条
+    return system_msgs + non_system[-keep_last_n:]
 
-    return system_msgs + kept
+# 策略 2（变体）：基于 token 预算的滑动窗口
+# from tiktoken import encoding_for_model
+# def sliding_window_by_tokens(messages: list, model: str, max_tokens: int = 4000) -> list:
+#     """从后往前累加，直到达到 token 预算。需要预先建好 enc。"""
+#     enc = encoding_for_model(model)
+#     system_msgs = [m for m in messages if isinstance(m, SystemMessage)]
+#     non_system = [m for m in messages if not isinstance(m, SystemMessage)]
+#     kept, total = [], 0
+#     for msg in reversed(non_system):
+#         msg_tokens = len(enc.encode(str(msg.content)))
+#         if total + msg_tokens > max_tokens:
+#             break
+#         kept.insert(0, msg)
+#         total += msg_tokens
+#     return system_msgs + kept
 
 # 策略 3：摘要压缩（旧消息压成摘要）
 async def summarize_old_messages(messages: list, llm) -> list:

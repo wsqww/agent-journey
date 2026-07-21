@@ -80,6 +80,90 @@ uv run python test_llm.py
 
 ---
 
+### 🅱️ 选项 B（前端友好版）：5 分钟——用 TypeScript 跑通第一次调用
+
+> **为什么加这个选项：** 你是前端工程师，TypeScript 是你的母语。**第一次拿到正反馈的成本越低，越不容易在 Day 1 放弃。** 你可以先用最熟悉的工具跑通，Week 4 再去学 Python 版——两份代码做的事完全一样，对照看你会理解更深。
+
+任选一种最顺手的方式：
+
+#### 方式 1：零依赖，用原生 `fetch`（最直观，没有魔法）
+
+```bash
+# 1. 设置 API Key
+export OPENAI_API_KEY=sk-your-key-here
+
+# 2. 创建 first-llm.ts
+cat > first-llm.ts << 'TSEOF'
+const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+  },
+  body: JSON.stringify({
+    model: "gpt-5-latest",
+    messages: [{ role: "user", content: "你好，用一句话介绍你自己。" }],
+    max_tokens: 100,
+  }),
+});
+const data = await res.json();
+console.log(data.choices[0].message.content);
+console.log(`\n(这次调用消耗了 ${data.usage.total_tokens} 个 token)`);
+TSEOF
+
+# 3. 运行（用 tsx 直接跑 .ts，不用编译）
+npx tsx first-llm.ts
+```
+
+> 这段代码的每一行你都应该看得懂——`fetch` 是前端的日常。**Week 4 的 Python 版用 `openai` SDK 做的是同一件事**，只是把 `fetch` 换成了 SDK 封装。
+
+#### 方式 2：用 Vercel AI SDK（工业级写法，Phase 6 会大量用）
+
+```bash
+# 1. 初始化一个最小项目
+mkdir first-llm-ai-sdk && cd first-llm-ai-sdk
+npm init -y
+npm install ai @ai-sdk/openai
+npm install -D tsx typescript @types/node
+
+# 2. 设置 Key
+export OPENAI_API_KEY=sk-your-key-here
+
+# 3. 创建 index.ts
+cat > index.ts << 'TSEOF'
+import { generateText } from "ai";
+import { openai } from "@ai-sdk/openai";
+
+const { text, usage } = await generateText({
+  model: openai("gpt-5-latest"),
+  prompt: "你好，用一句话介绍你自己。",
+  maxTokens: 100,
+});
+
+console.log(text);
+console.log(`\n(这次调用消耗了 ${usage.totalTokens} 个 token)`);
+TSEOF
+
+# 4. 运行
+npx tsx index.ts
+```
+
+> **Vercel AI SDK** 是 Phase 6 前端集成的主力工具。现在先混个脸熟，不用记 API——重点是感受"原来调 LLM 跟调一个普通 async 函数没区别"。
+
+---
+
+**两个选项我该选哪个？**
+
+| 你的情况 | 建议 |
+|---------|------|
+| 想最快拿到正反馈、Python 一行没写过 | **先选 B（TS 版）** 跑通，再去学 Python |
+| 想直接进入主线、不怕前几行 Python 报错 | 选 A（Python 版），Week 4 会重见 |
+| 时间够、两个都跑 | **强烈推荐**——同一份请求用两种语言实现一遍，你会对 LLM API 的本质有深刻理解 |
+
+**不管选哪个，目标只有一个：今晚跑通一次 LLM 调用，把兴奋感锚定住。** AI 不是黑盒——你能让它干活了。
+
+---
+
 # Week 1：Python 语法速通
 
 > **目标：** 用 7 天时间，用 JS/TS 思维锚点快速上手 Python
@@ -1497,10 +1581,8 @@ for chunk in stream_chat([{"role": "user", "content": "你好"}]):
 
 **核心代码结构**
 ```python
-# src/chatbot/main.py
-import sys
+# src/chatbot/__main__.py
 from rich.console import Console
-from rich.markdown import Markdown
 from chatbot.session import ChatSession
 from chatbot.config import Config
 
@@ -1528,21 +1610,32 @@ def main():
             session.switch_model(user_input[7:])
             continue
 
-        # 流式输出
+        # 流式输出：stream_chat 返回生成器，必须用 for 循环迭代才会真正产生输出。
+        # 漏掉 for 循环是最常见的坑（生成器惰性求值，不迭代 = 什么都不发生）。
         console.print("[bold green]AI>[/] ", end="")
-        reply = session.stream_chat(user_input)
-        console.print()
+        try:
+            for chunk in session.stream_chat(user_input):
+                console.print(chunk, end="")
+            console.print()  # 换行
+        except Exception as e:
+            console.print(f"\n[red]错误: {e}[/]")  # 单次失败不退出整个会话
 
 if __name__ == "__main__":
     main()
 ```
 
+> 💡 **关键点：** `stream_chat()` 返回的是 Python 生成器（`Generator[str, None, None]`）。**生成器是惰性的**——只有被 `for` 循环迭代时，函数体才会真正执行。直接 `reply = session.stream_chat(user_input)` 不做迭代，等于什么都没发生。
+>
+> 这个坑很常见，**前端类比**：生成器 ≈ RxJS 的 Observable 或 Node.js 的 Readable Stream——光创建不订阅，里面什么都不会跑。
+
 ### 今日任务
 
 - [ ] 完整实现 CLI 聊天机器人 v1
-- [ ] 用 `rich` 库美化输出（Markdown 渲染、代码高亮）
-- [ ] 测试所有命令
+- [ ] 用 `rich` 库美化输出（彩色提示符、错误高亮）
+- [ ] 测试所有命令（`/quit`、`/clear`、`/model <name>`）
 - [ ] 在 README 写使用说明
+
+> 📝 **关于 Markdown 渲染：** 流式过程中渲染 Markdown 需要用 `rich.live.Live` 实时刷新整段内容，属于进阶技能。v1 先做到"彩色输出 + 流式打字机"即可；Markdown 渲染放到 Week 5（结构化输出）或 Phase 6（前端集成）再处理。
 
 ---
 
@@ -1572,7 +1665,10 @@ def test_chat(mock_openai_class):
     reply = session.chat("你好")
 
     assert reply == "你好！"
-    assert len(session.messages) == 3  # system + user + assistant
+    # 参考实现里 ChatSession.messages 只存 user/assistant 两条，
+    # system prompt 由 Provider 内部处理（不进 messages 数组）。
+    # 如果你把 system 也存进 messages，这里应该是 3。
+    assert len(session.messages) == 2  # user + assistant
 ```
 
 **2. 增强功能**
@@ -1584,6 +1680,7 @@ def test_chat(mock_openai_class):
 
 **3. 错误处理增强**
 ```python
+import time
 from openai import RateLimitError, APIConnectionError
 
 def safe_chat(self, user_input: str) -> str:
@@ -1591,7 +1688,7 @@ def safe_chat(self, user_input: str) -> str:
         try:
             return self.chat(user_input)
         except RateLimitError:
-            time.sleep(2 ** attempt)
+            time.sleep(2 ** attempt)  # 指数退避：1s, 2s, 4s
         except APIConnectionError as e:
             console.print(f"[red]连接失败: {e}[/]")
             return ""
