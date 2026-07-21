@@ -135,6 +135,7 @@
 - [LangGraph 官方教程](https://langchain-ai.github.io/langgraph/)
 - [OpenAI Cookbook](https://cookbook.openai.com/)
 - 🚫 [反模式库（本项目）](../anti-patterns.md) — 18 个真实工程坑，按阶段分类
+- 🔧 [工具速查表（本项目）](../toolkit.md) — 一页汇总所有工具，含选型决策树
 
 ### 必读论文（速读）
 - ReAct: Reasoning + Acting

@@ -3030,18 +3030,101 @@ export default function PortfolioPage() {
 因为文档量大（> 1000 篇）且频繁更新。"
 ```
 
+### 进阶补充：2025+ 新主题面试题（含答题骨架）
+
+> **为什么单拎出来：** 上面 5+5 题覆盖的是 2023-2024 的经典范围。2025 起面试官越来越关注**推理模型、MCP、Agent 安全、结构化输出新方案**等新主题——答得出来能立刻拉开差距，答不出来会显得"知识停留在 GPT-4 时代"。
+
+#### Q6：推理模型（o 系列 / Claude Thinking / R1）对 Prompt 工程和 Agent 设计有什么影响？
+
+**答题骨架：**
+1. **核心范式变化**：传统 LLM 需 Prompt 引导 CoT；推理模型**内部自带思考**，额外加 CoT 反而有害
+2. **Prompt 写法变化**：传统 → 越详细越好；推理 → **越简洁越好**，把思考交给模型
+3. **Agent 架构影响**：Planner 用推理模型（规划质量高），Executor 用传统模型（快、便宜）
+4. **成本与延迟治理**：思考 token 也计费，单次成本可能 10x；前端必须流式 + 进度提示
+5. **ReAct 需重新审视**：推理模型可能把"何时调用工具"也内化，Tool Use 协议有变化
+
+**追问陷阱：**
+- "那为什么 Claude Thinking 也能加 extended thinking prompt？" → 可以微调引导方向，但不应像传统模型那样硬塞 CoT
+- "推理模型跑 Agent 不是很贵吗？" → **Planner-Executor 分层**：Planner 用推理（一次），Executor 用经济模型（多次）
+- "推理模型不返回思考过程，怎么调试？" → 多数厂商已开放 reasoning summary（OpenAI reasoning summary、Anthropic thinking blocks）
+
+#### Q7：MCP 解决了什么问题？什么时候该用 MCP Server 而不是普通工具？
+
+**答题骨架：**
+1. **MCP 本质**：Anthropic 推出的工具协议标准，目标是"USB-C 接口"——一次实现，所有 MCP Client 通用
+2. **三类原语**：Tools（动作）/ Resources（数据）/ Prompts（模板）
+3. **MCP vs 普通工具函数**：
+   - 一次性、专属于你 Agent → 普通 Python 函数更简单
+   - 跨 Agent 复用 / 被 Claude Desktop 用 / 跨语言 → 值得做成 MCP Server
+4. **两种角色**：Server（生产者）和 Client（消费者，如 Claude Desktop / Cursor / LangGraph）
+
+**追问陷阱：**
+- "MCP 和 Function Calling 什么关系？" → Function Calling 是 LLM 与工具之间的协议；MCP 是**工具与应用之间**的协议，可以承载 Function Calling
+- "远程 MCP 安全怎么保证？" → OAuth（PKCE / redirect_uri / scope）+ TLS + Server 身份验证，不能当本地函数调用
+- "MCP 现在成熟了吗？" → 2025 起爆发，官方和社区已有上百个 Server，但规范还在演进
+
+#### Q8：Agent 上线最大的安全风险是什么？怎么防？
+
+**答题骨架：**
+1. **核心攻击面**：间接 Prompt 注入（Agent 读取的网页 / 文档里藏着恶意指令）
+2. **P0 防御清单**（背下来）：
+   - 凭证管理：API Key 只在后端，绝不进前端
+   - 工具权限：危险工具白名单 + Human-in-the-Loop
+   - 间接注入防御：外部内容用分隔符隔离 + System Prompt 声明"不可信"
+   - 输出过滤：PII 脱敏 + schema 强校验
+   - 成本护栏：max_steps / max_tokens / max_cost 三重上限
+3. **P1**：所有 Agent 决策进 trace，沙箱执行代码，红队自测
+
+**追问陷阱：**
+- "Prompt 注入真防得住吗？" → **没有 100% 防御**，但分层防御可以把风险降到可接受；引用 [Anthropic 的注入研究](https://www.anthropic.com/research)
+- "用户愿意付钱能解锁更强模型，怎么做？" → 分级计费 + 配额 + 用户级审计日志
+- "如果 Agent 被劫持乱发邮件怎么办？" → 危险动作必须 Human-in-the-Loop（LangGraph 原生支持）
+
+#### Q9：结构化输出方案怎么选？（2025+ 版）
+
+**答题骨架：**
+1. **五种方案横评**：JSON Mode / OpenAI 原生 Structured Outputs / `response_format` + JSON Schema / Anthropic Tool Use 强制 / instructor 跨厂商
+2. **按厂商推荐**：OpenAI → 直接传 Pydantic 类（`client.beta.chat.completions.parse`）；Anthropic → Tool Use + `tool_choice` 强制
+3. **跨厂商项目** → instructor 统一接口 + 自带重试
+4. **关键细节**：Pydantic Field 的 `description` 会发给 LLM 并影响准确率
+
+**追问陷阱：**
+- "JSON Mode 不够吗？" → 不够，只保证合法 JSON，不保证 schema（字段可能缺 / 类型错）
+- "结构化输出会让模型变笨吗？" → 会有一点点（约束解码限制了输出空间），但工程稳定性收益远大于准确率损失
+- "嵌套很深的 schema 怎么办？" → 拆成多个 Pydantic 类，避免单次调用处理超 10 个字段
+
+#### Q10：你做过的项目里，最难的工程问题是什么？
+
+**答题骨架（STAR 法则）：**
+- **Situation**：在 X 项目中…
+- **Task**：需要做到…
+- **Action**：我发现问题是…我采取了…
+- **Result**：量化结果（准确率 / 成本 / 延迟）
+
+**陷阱与对策：**
+- ❌ **避免**：答"没有特别难的"或泛泛而谈"都挺难的"
+- ❌ **避免**：答纯技术细节（如"装某个包装不上"）—— 面试官想看你的**工程思维**
+- ✅ **推荐**：讲一个具体 trade-off 故事——"为了准确率从 80% 提到 90%，我对比了 3 种 RAG 策略，最终选了 X，代价是延迟增加 Y"
+- ✅ **加分**：主动讲**踩过的坑**（"一开始我用 eval 跑用户代码，差点出安全事故，后来换 E2B 沙箱"）—— 诚实 + 反思是高级工程师标志
+
 ### 今日任务
 
 - [ ] 准备 8 个进阶题的回答
 - [ ] 每个回答都有数据 / 项目案例
+- [ ] **额外：把 Q6-Q10 这 5 道 2025+ 新题各写一份答题骨架**
 - [ ] 准备 3 个"反问面试官"的问题
 - [ ] 录一段 5 分钟的自我介绍视频（自查）
+- [ ] **找朋友模拟面试，让对方至少追问 2 层**（练习追问陷阱）
 
 ### 自检清单
 
 - [ ] 我能流利回答进阶题
 - [ ] 我有数据支撑每个观点
 - [ ] 我能在被追问时不慌
+- [ ] **我能说出推理模型对 Prompt 和 Agent 设计的影响**
+- [ ] **我能讲清 MCP 解决什么问题、什么时候用**
+- [ ] **我能背出 Agent 上线 P0 安全清单**
+- [ ] **我有 1 个具体可量化的"最难工程问题"故事**
 
 ---
 

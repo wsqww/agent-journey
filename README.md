@@ -28,5 +28,6 @@ agent-study/
 
 ## 补充资料
 
+- 🔧 [工具速查表](./docs/toolkit.md)：一页汇总所有用到的工具（LLM / 向量库 / 框架 / 部署…），按用途分类，含选型决策树。学习时 bookmark，做新项目时当选型参考。
 - 🚫 [反模式库](./docs/anti-patterns.md)：18 个真实工程坑（"错在哪 → 怎么改"），按阶段分类。每学完一个阶段回来扫一遍对应章节，code review 当 checklist 用。
 
