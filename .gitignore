@@ -1,0 +1,85 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+build/
+dist/
+*.egg-info/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
+
+# uv / Poetry / pip
+uv.lock
+poetry.lock
+# 注：锁文件是否入库见团队约定，个人学习项目建议忽略，避免多项目互相污染
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ===== Node.js / 前端 =====
+node_modules/
+.next/
+out/
+.nuxt/
+.cache/
+.turbo/
+.vercel/
+dist/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# ===== 环境变量与密钥（绝不入库）=====
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets/
+credentials.json
+
+# ===== 编辑器 / IDE =====
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ===== 编辑器本地历史（重要：避免污染仓库）=====
+.history/
+
+# ===== 操作系统 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== 数据库 / 数据文件 =====
+*.sqlite
+*.sqlite3
+*.db
+data/
+chroma_db/
+qdrant_data/
+
+# ===== 学习产出（大文件 / 个人数据）=====
+notes/private/
+*.local

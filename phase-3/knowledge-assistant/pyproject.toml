@@ -1,0 +1,28 @@
+[project]
+name = "knowledge-assistant"
+version = "0.1.0"
+description = "个人知识助手（RAG + Function Calling）— Phase 3 & 6 产出物"
+requires-python = ">=3.12"
+dependencies = [
+    "openai>=1.0.0",
+    "anthropic>=0.30.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "chromadb>=0.5.0",
+    "langchain>=0.3.0",
+    "langchain-community>=0.3.0",
+    "tiktoken>=0.7.0",
+    "httpx>=0.27.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.6.0",
+    "mypy>=1.10.0",
+    "ragas>=0.1.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
