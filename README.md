@@ -7,7 +7,7 @@
 ## 仓库结构
 
 ```
-agent-study/
+agent-journey/
 ├── docs/learning-path/    # 学习路线文档（README + 6 阶段 + 6 份每日计划）
 ├── phase-1/ ~ phase-6/    # 各阶段代码练习与作品集项目
 ├── notes/                 # 学习笔记

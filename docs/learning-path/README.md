@@ -165,7 +165,7 @@
 ## 目录结构建议
 
 ```
-agent-study/
+agent-journey/
 ├── docs/
 │   └── learning-path/         # 本学习路线文档
 ├── phase-1/                   # 第 1 阶段代码练习
