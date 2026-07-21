@@ -1540,18 +1540,139 @@ if __name__ == "__main__":
 
 重启 Claude Desktop，应该能看到工具图标亮起。
 
+#### 5. 消费方视角（重要）：在 Agent 里接入别人的 MCP Server
+
+> **为什么加这一节：** Day 4 上面讲的是"**写**一个 MCP Server"（生产者）。但对应用层 Agent 工程师，**消费别人写好的 MCP Server** 才是日常高频场景——官方 Hub / 社区已有上百个现成 Server（GitHub、Notion、Slack、文件系统、数据库…），直接接入比手写工具快十倍。**只学怎么写 Server 不学怎么用，等于买了一堆电器却不会插电。**
+
+##### 三种主流 Client 接入方式（按使用频率排序）
+
+**方式 1：在 Claude Desktop / Cursor / Cline 里接入（零代码）**
+
+这是最常见的用法——MCP Server 跑在本地，编辑器作为 MCP Client 自动暴露工具给 LLM。你只需要写**配置文件**：
+
+```jsonc
+// ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)
+// 或 Cursor 的 Settings → MCP
+{
+  "mcpServers": {
+    // 官方提供的文件系统 Server（零配置直接用）
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/you/notes"]
+    },
+    // 社区提供的 GitHub Server
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {"GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_xxx"}
+    },
+    // 你自己写的 Server（Day 4 那个）
+    "my-first-server": {
+      "command": "uv",
+      "args": ["--directory", "/ABSOLUTE/PATH", "run", "server.py"]
+    }
+  }
+}
+```
+
+重启 Client 后，LLM 自动多出 N 个工具可用。**前端类比：** 这就像 npm install 了一个库并 import，工具变成"开箱即用"的能力。
+
+**方式 2：在 LangGraph / LangChain 里以编程方式接入（应用层 Agent）**
+
+这是**应用层 Agent 工程师必须会**的——你想做一个能操作 Notion + GitHub 的自定义 Agent，需要在代码里消费 MCP Server：
+
+```bash
+uv add "langchain-mcp-adapters" mcp
+```
+
+```python
+from langchain_mcp_adapters.client import MultiServerMCPClient
+from langgraph.prebuilt import create_react_agent
+from langchain_openai import ChatOpenAI
+
+# 1. 配置要消费的 MCP Server（可以是本地 stdio 或远程 SSE/HTTP）
+client = MultiServerMCPClient({
+    "filesystem": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/you/notes"],
+        "transport": "stdio",
+    },
+    "github": {
+        "url": "https://mcp.github.com/sse",  # 远程 Server 走 HTTP/SSE
+        "transport": "sse",
+    },
+})
+
+# 2. 拉取所有 Server 暴露的工具，它们会自动变成 LangChain Tool 对象
+tools = await client.get_tools()
+
+# 3. 把工具塞进 LangGraph 的 ReAct Agent，和普通工具无差别使用
+llm = ChatOpenAI(model="gpt-5-latest")
+agent = create_react_agent(llm, tools)
+
+result = await agent.ainvoke({
+    "messages": [{"role": "user", "content": "列出我 notes 目录的 markdown 文件，并按修改时间排序"}]
+})
+```
+
+**关键点：** `client.get_tools()` 把 N 个 MCP Server 的工具**拍平成一个 list**，对你 Agent 来说就是一堆普通工具。这是 MCP 最大的价值——**一次接入，所有 MCP Server 通用**。
+
+**方式 3：用 MCP Python SDK 直接做 Client（需要精细控制时）**
+
+```python
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+
+# 连接到任意 MCP Server
+server_params = StdioServerParameters(
+    command="npx",
+    args=["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+)
+
+async with stdio_client(server_params) as (read, write):
+    async with ClientSession(read, write) as session:
+        await session.initialize()
+
+        # 列出工具
+        tools_result = await session.list_tools()
+        print([t.name for t in tools_result.tools])
+
+        # 调用某个工具
+        result = await session.call_tool("read_file", {"path": "/tmp/test.txt"})
+        print(result.content)
+```
+
+##### 去哪里找现成的 MCP Server？
+
+| 资源 | 说明 |
+|------|------|
+| [MCP 官方 Servers 仓库](https://github.com/modelcontextprotocol/servers) | 官方维护的参考实现（filesystem、git、github、slack 等） |
+| [Awesome MCP Servers](https://github.com/punkpeye/awesome-mcp-servers) | 社区聚合，按类别分类 |
+| [Smithery.ai](https://smithery.ai/) | MCP Server 包管理器，`npx @smithery/cli install xxx` |
+| [mcp.so](https://mcp.so/) | 可在线搜索的 MCP Hub |
+
+##### Client 视角的三个关键认知
+
+1. **MCP 是协议不是库**——Server 用任何语言写都行（Python/Node/Go），Client 只要遵循协议就能消费。
+2. **远程 MCP 涉及 OAuth**——如果 Server 需要授权（如 GitHub），必须处理 PKCE / token audience / scope，不能当成"本地函数调用"（详见阶段文档的安全提示）。
+3. **不是所有工具都该做成 MCP Server**——一次性、专属于你 Agent 的工具直接写成 Python 函数更简单；**跨 Agent 复用、跨语言、要被 Claude Desktop 用**的工具才值得做成 MCP Server。
+
 #### 今日任务
 
 - [ ] 安装 MCP Python SDK：`uv add "mcp[cli]"`
 - [ ] 跑通上面的 Hello World Server
 - [ ] 接入 Claude Desktop 测试
 - [ ] 让 Claude 调用你的 `add` 和 `greet` 工具
+- [ ] **额外：在 Claude Desktop 里接入一个官方 filesystem Server**，体验"零代码消费"的快感
+- [ ] **额外：用 `langchain-mcp-adapters` 在 Python 代码里消费 filesystem Server**，把它的工具塞进一个 ReAct Agent
 
 #### 自检
 
 - [ ] 我能跑通最小 MCP Server
 - [ ] 我能把它接入 Claude Desktop
 - [ ] 我能解释 stdio 传输的工作方式
+- [ ] **我能在 LangGraph 里用 MCP Server 暴露的工具（消费方视角）**
+- [ ] **我知道在哪里找现成的 MCP Server（官方 + 社区 Hub）**
 
 ---
 

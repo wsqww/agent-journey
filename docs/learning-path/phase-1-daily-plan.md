@@ -1812,11 +1812,130 @@ person_data = json.loads(response.content[0].input)
 # {"name": "张三", "age": 30}
 ```
 
+**5. Structured Outputs 的 2025+ 演进（重要：选型必读）**
+
+> **为什么单拎出来：** 上面第 2-4 小节是 2023-2024 的"经典三件套"（JSON Mode / Pydantic parse / Tool Use）。**2025 起，OpenAI 和 Anthropic 都推出了强约束的原生方案**，各家第三方库（instructor、OpenAI 官方 Agents SDK）也收敛了最佳实践。**照着老教程学容易做出不稳定的产品**。
+
+### 五种方案横评（2026-07 视角）
+
+| 方案 | 厂商 | 严格度 | 代码量 | 失败行为 | 适用场景 |
+|------|------|:------:|:------:|---------|---------|
+| **JSON Mode** | OpenAI | 🟡 保证合法 JSON，但不保证 schema | 极少 | 偶尔缺字段、类型错乱 | 简单提取、不在乎字段完整性 |
+| **Structured Outputs (Pydantic parse)** | OpenAI | 🟢 强约束 schema | 少 | 极少失败（模型原生支持） | **OpenAI 项目的默认选择** |
+| **`response_format` + JSON Schema** | OpenAI | 🟢 强约束 schema | 中 | 极少失败 | 不想引 Pydantic 依赖、跨语言 |
+| **Tool Use 强制 (`tool_choice`)** | Anthropic | 🟢 强约束 schema | 中 | 偶尔参数缺失 | **Anthropic 项目的默认选择** |
+| **instructor 库** | 跨厂商 | 🟢 强约束 + 自动重试 | 少 | 自动重试 N 次后抛错 | 想统一 OpenAI/Anthropic/Gemini 接口 |
+
+### 推荐写法（按厂商选）
+
+#### OpenAI：用 `response_format` 直接传 Pydantic 类（最简）
+
+> 2025+ OpenAI 的 `client.beta.chat.completions.parse()` 已经稳定，**直接传 Pydantic 类即可**，SDK 自动把 Pydantic 转 JSON Schema 喂给模型，返回时自动 parse。**不要再手写 JSON Schema，也不要用老的 `response_format={"type": "json_object"}`。**
+
+```python
+from pydantic import BaseModel, Field
+from openai import OpenAI
+
+client = OpenAI()
+
+class PersonInfo(BaseModel):
+    """模型描述 + 字段描述都会被发给 LLM，帮它理解意图。"""
+    name: str = Field(description="全名")
+    age: int = Field(description="年龄，0-150", ge=0, le=150)
+
+response = client.beta.chat.completions.parse(
+    model="gpt-5-latest",
+    messages=[{"role": "user", "content": "提取：'张三今年 30 岁'"}],
+    response_format=PersonInfo,  # ← 直接传类
+)
+
+person = response.choices[0].message.parsed  # 已经是 PersonInfo 实例
+# PersonInfo(name='张三', age=30)
+```
+
+**关键：** Field 的 `description` 不仅是给开发者看的——**SDK 会把它序列化进 JSON Schema 发给 LLM**，写得越清晰，准确率越高。
+
+#### Anthropic：用 Tool Use + `tool_choice={"type": "tool", ...}`（官方推荐）
+
+> Anthropic **没有** OpenAI 那种"原生 Structured Outputs"，但通过 Tool Use 强制调用可以达成等价效果，这是官方文档的推荐路径。
+
+```python
+from anthropic import Anthropic
+
+client = Anthropic()
+
+# 用 Pydantic 自动生成 input_schema，避免手写 JSON Schema
+from pydantic import BaseModel
+class PersonInfo(BaseModel):
+    name: str
+    age: int
+
+response = client.messages.create(
+    model="claude-sonnet-4-5-latest",
+    max_tokens=1024,
+    tools=[{
+        "name": "extract_person",
+        "description": "提取人物信息",
+        "input_schema": PersonInfo.model_json_schema(),  # ← Pydantic 自动生成
+    }],
+    tool_choice={"type": "tool", "name": "extract_person"},  # ← 强制调用
+    messages=[{"role": "user", "content": "张三今年 30 岁"}],
+)
+
+# response.content 里会有 ToolUse block，input 就是结构化数据
+tool_use = next(b for b in response.content if b.type == "tool_use")
+person = PersonInfo(**tool_use.input)
+```
+
+#### 跨厂商统一：用 instructor 库（适合多 Provider 项目）
+
+```bash
+uv add instructor
+```
+
+```python
+# instructor 把 OpenAI/Anthropic/Gemini 的不同协议统一成一个 .create() 调用
+# 还自带重试机制（Pydantic 校验失败自动把错误回传 LLM 重试 N 次）
+import instructor
+from anthropic import Anthropic
+from pydantic import BaseModel
+
+# 把任意 SDK client 包装成 instructor client
+client = instructor.from_anthropic(Anthropic())
+
+class PersonInfo(BaseModel):
+    name: str
+    age: int
+
+person = client.messages.create(
+    model="claude-sonnet-4-5-latest",
+    response_model=PersonInfo,  # ← instructor 统一参数名
+    max_tokens=1024,
+    max_retries=3,              # ← 自动重试
+    messages=[{"role": "user", "content": "张三今年 30 岁"}],
+)
+# 直接返回 PersonInfo 实例，不用手动 parse
+```
+
+### 三个实践要点（踩坑总结）
+
+1. **Pydantic 模型的 `description` 是给 LLM 看的**——写得像自然语言指令，准确率会明显提升。例：
+   ```python
+   # ❌ 差：description 只给开发者看
+   score: float = Field(description="score")
+
+   # ✅ 好：description 像 prompt
+   score: float = Field(description="情感分数，-1.0 极负面到 1.0 极正面，0 为中性")
+   ```
+2. **嵌套结构要拆成多个 Pydantic 类**——LLM 对"扁平 + 嵌套对象"的理解远好于"超深嵌套"。
+3. **不要把大量逻辑塞进一个超大 Pydantic 类**——超过 10 个字段就考虑拆成多次调用（Phase 3 会讲"工具编排"）。
+
 ### 今日任务
 
 - [ ] 用 JSON Mode 实现一个简单的信息提取
 - [ ] 用 Structured Outputs（Pydantic）实现同样的功能
 - [ ] 对比两种方式的稳定性
+- [ ] **试一遍 instructor 库**：同一任务分别用 OpenAI / Anthropic 后端跑通，体会"统一接口"的好处
 - [ ] 故意输入模糊的句子，看 LLM 如何处理
 
 ### 自检
@@ -1824,6 +1943,8 @@ person_data = json.loads(response.content[0].input)
 - [ ] 我能用 JSON Mode 让 LLM 输出合法 JSON
 - [ ] 我会用 Pydantic 模型约束 LLM 输出
 - [ ] 我理解 OpenAI 和 Anthropic 实现结构化输出的差异
+- [ ] **我能说出 2025+ 五种结构化输出方案的取舍（OpenAI 原生 / Anthropic Tool Use / instructor / JSON Mode / 手写 Schema）**
+- [ ] **我知道 Pydantic Field 的 description 会发给 LLM 并影响准确率**
 
 ---
 
