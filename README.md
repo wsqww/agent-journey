@@ -26,14 +26,3 @@ agent-study/
 - **时效：** 文档模型名/价格/工具版本以各厂官方最新为准，每季度自行校准
 - **密钥：** API Key 一律用环境变量，绝不入库（`.gitignore` 已屏蔽 `.env`）
 
-## Git 初始化（可选但推荐）
-
-本仓库当前未纳入 git。建议执行：
-
-```bash
-git init
-git add .
-git commit -m "init: agent 学习路线文档"
-```
-
-`.gitignore` 已就绪，会自动忽略 `.history/`、`.venv/`、`node_modules/`、`.env` 等。
