@@ -1,5 +1,18 @@
 /* 学习进度组件样式 —— 跟随 VitePress 主题变量，自动适配明暗模式。 */
 
+/* 首页 Hero 主/副标题：VitePress 给 .name/.text 设了窄列上限（392/576px，为
+   「文字+配图」并排的 Hero 设计），纯文字 Hero 下会把「前端工程师 → 全职 Agent 工程师」
+   从中间折断。VPHero 的规则带 scoped 属性选择器（.text[data-v-xxx]），级联中会压过
+   普通同名规则，因此这里用 !important 明确覆盖：
+   字号随视口在 28-40px 间缩放——桌面端整句一行；手机端不强求单行，
+   放不下时自然折行。 */
+.VPHero .name,
+.VPHero .text {
+  font-size: clamp(28px, 3.2vw, 40px) !important;
+  line-height: 1.35 !important;
+  max-width: none !important;
+}
+
 /* 顶栏进度条整体容器 */
 .aj-progress {
   position: relative;
