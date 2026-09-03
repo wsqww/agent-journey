@@ -12,6 +12,7 @@ import "./custom.css";
  *   - NavBarProgress   → 顶栏右侧：总进度条（已完成 n/16）
  *   - DocCompleteToggle → 正文页脚上方："标记本页已完成"按钮
  *   - BackToTop        → 右下角浮动：回顶部按钮（长文档快速返回）
+ * Github 仓库链接走 config.mts 的 themeConfig.nav（标准导航项，零定制）。
  * 其余外观与行为全部沿用 VitePress 默认主题。
  */
 export default {

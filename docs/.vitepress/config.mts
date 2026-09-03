@@ -65,6 +65,9 @@ export default defineConfig({
   themeConfig: {
     siteTitle: "Agent 工程师学习路线",
 
+    // 顶部导航：外链 VitePress 会自动加 ↗ 角标并新窗口打开，手机端自动进抽屉菜单
+    nav: [{ text: "Github", link: "https://github.com/wsqww/agent-journey" }],
+
     // 侧边栏：按扫描结果的分组顺序生成，「总览」默认展开
     sidebar: [...new Set(PAGES.map((p) => p.group))].map((group) => ({
       text: group,
