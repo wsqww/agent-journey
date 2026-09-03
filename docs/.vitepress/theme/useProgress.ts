@@ -4,13 +4,17 @@ import { CONTENT_PAGES } from "../pages";
 /**
  * 学习进度状态（v1 存本机 localStorage，不经网络、不入库）。
  *
- * 职责：为导航栏进度条与页脚"标记完成"按钮提供共享的读写状态。
+ * 职责：为导航栏进度条与页脚"标记完成"按钮提供共享的读写状态；
+ *       统计范围为 learning-path 页面（总览+各阶段），附录不计入进度。
  * 存储：key = agent-journey-progress-v1，value = { [route]: true }。
  * 扩展点：未来要跨设备同步时，把 persist() 改为写仓库里的 progress.json 即可，
  *         调用方无需改动。
  */
 
 const STORAGE_KEY = "agent-journey-progress-v1";
+
+/** 进度统计范围：仅 learning-path 页面（总览+各阶段）；附录属查阅资料，不计入。 */
+export const PROGRESS_PAGES = CONTENT_PAGES.filter((p) => p.group !== "附录");
 
 /** 路由 -> 是否已完成。reactive 保证两个组件视图自动联动。 */
 const state = reactive<Record<string, boolean>>({});
@@ -59,11 +63,11 @@ export function useProgress() {
 
   /** 已完成页数（computed：依赖 reactive state，标记后进度条自动刷新）。 */
   const completedCount = computed(
-    () => CONTENT_PAGES.filter((p) => state[p.route]).length,
+    () => PROGRESS_PAGES.filter((p) => state[p.route]).length,
   );
 
   /** 进度分母 = 受追踪页面总数。 */
-  const total = CONTENT_PAGES.length;
+  const total = PROGRESS_PAGES.length;
 
   return { state, isDone, toggle, completedCount, total };
 }

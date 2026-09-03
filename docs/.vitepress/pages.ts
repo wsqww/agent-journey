@@ -19,5 +19,5 @@ export interface SitePage {
   group: string;
 }
 
-/** 全部受追踪页面（顺序 = 侧边栏顺序）。进度条分母 = 本数组长度。 */
+/** 全部受追踪页面（顺序 = 侧边栏顺序，含附录）。进度分母在 useProgress 内过滤附录后计算。 */
 export const CONTENT_PAGES: SitePage[] = rawPages;

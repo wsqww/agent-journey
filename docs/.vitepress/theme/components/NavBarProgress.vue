@@ -3,19 +3,38 @@
  * 顶栏学习进度条。
  *
  * 职责：显示"已完成 n/总数"进度条；点击展开全部页面清单，可跳转回顾、可见完成状态。
- * 数据：来自 useProgress()（localStorage 持久化），分母为 pages.ts 登记的受追踪页面数。
+ * 数据：来自 useProgress()（localStorage 持久化），分母为 learning-path 页面数，
+ *       附录不计入进度、也不出现在清单里。
  * 联动：state 为 reactive，页脚"标记完成"后本组件自动刷新，无需事件通信。
+ * 交互：点击区域外任意处收起清单（桌面浮层惯例，抽屉实例同样生效）。
  */
-import { computed, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useData } from "vitepress";
-import { routeFromRelativePath, useProgress } from "../useProgress";
-import { CONTENT_PAGES } from "../../pages";
+import {
+  routeFromRelativePath,
+  useProgress,
+  PROGRESS_PAGES,
+} from "../useProgress";
 
 const { completedCount, total, state } = useProgress();
 const { page } = useData();
 
 /** 清单展开开关（点击进度条区域切换）。 */
 const expanded = ref(false);
+
+/** 组件根节点（进度条+浮层）引用，用于判断点击落点是否在区域内。 */
+const root = ref<HTMLElement | null>(null);
+
+/** 点击根节点以外区域时收起清单；触发按钮在根内，自身开合不受影响。 */
+function onDocClick(e: MouseEvent): void {
+  if (root.value && !root.value.contains(e.target as Node)) {
+    expanded.value = false;
+  }
+}
+
+// 挂载后监听整页点击、卸载时移除，防止监听器泄漏（SSR 构建期不执行）
+onMounted(() => document.addEventListener("click", onDocClick));
+onBeforeUnmount(() => document.removeEventListener("click", onDocClick));
 
 /** 当前页路由，用于清单中高亮。 */
 const currentRoute = computed(() =>
@@ -29,7 +48,7 @@ const percent = computed(() =>
 </script>
 
 <template>
-  <div class="aj-progress">
+  <div ref="root" class="aj-progress">
     <button
       class="aj-progress-trigger"
       :aria-expanded="expanded"
@@ -45,7 +64,7 @@ const percent = computed(() =>
     <div v-if="expanded" class="aj-progress-pop">
       <p class="aj-progress-pop-title">学习进度（仅存本机浏览器）</p>
       <a
-        v-for="p in CONTENT_PAGES"
+        v-for="p in PROGRESS_PAGES"
         :key="p.route"
         :href="p.route"
         class="aj-progress-item"
