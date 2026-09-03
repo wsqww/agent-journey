@@ -22,6 +22,8 @@
 > | 有传统 ML/NLP 背景 | **1.0x**（4 周） | — |
 >
 > **关键提醒：** Week 4（评测）是整条路线的"分水岭"——**至少 40% 的人会在这里卡 1.5 倍时间**。这是正常的，评测思维不是技术而是工程心智模型，建立一次受益终生。不要因为 Week 4 慢就跳过，跳过等于白学。
+>
+> **回填约定：** 学习本阶段时，每周用[复盘模板](../../notes/retro-template.md)记录实际耗时；本阶段完成后，把实测周数回填到上表，并将标题中的"预估"改为"实测"。
 
 - [ ] Week 1 - LLM 内部机制
 - [ ] Week 2 - Prompt 工程核心模式
@@ -58,7 +60,7 @@
 - 为什么会产生幻觉（预训练数据的局限性）
 - 为什么会"被越狱"（对齐不彻底）
 
-**主流模型对比与选型**（2026-07 代际，具体型号请以各厂最新文档为准）
+**主流模型对比与选型**（2026-07 代际；当期具体型号与价格以 [versions.md](../versions.md) 为准，此处只保留比较性论述）
 | 模型 | 优势 | 劣势 | 适用场景 |
 |------|------|------|---------|
 | GPT-5 系列（5.6 Sol/Terra/Luna） | 综合能力最强、推理模型成熟 | 贵、需要科学上网 | 复杂推理、生产环境 |
@@ -127,13 +129,11 @@
 
 ---
 
----
-
 ## Week 2 - Prompt 工程核心模式
 
 **核心思路：** Prompt 工程是工程，不是玄学。有方法论，有模式，可评测。
 
-**本周学什么（一句话概览）：** Zero-shot / Few-shot / CoT / Role-Playing 四大基础模式，System Message 设计，XML/Markdown/JSON 结构化模板，防御性 Prompt（注入攻击 + 多层防御），Prompt 调试技巧。详细代码和每日任务见 [每日计划](./phase-2-daily-plan.md#week-6---prompt-工程核心模式)。
+**本周学什么（一句话概览）：** Zero-shot / Few-shot / CoT / Role-Playing 四大基础模式，System Message 设计，XML/Markdown/JSON 结构化模板，防御性 Prompt（注入攻击 + 多层防御），Prompt 调试技巧。详细代码和每日任务见 [每日计划](./phase-2-daily-plan.md#week-2---prompt-工程核心模式)。
 
 ### 产出物
 
@@ -151,7 +151,7 @@
 
 **核心思路：** 这一阶段为 Agent 做铺垫，ReAct 是 Agent 的核心模式。
 
-**本周学什么（一句话概览）：** Self-Consistency（多次采样投票）、**ReAct 模式**（Thought→Action→Observation 循环，Agent 的基石）、Chain Prompting（多步串联）、ToT / Reflexion（树形搜索 + 反思重试）、DSPy 入门（程序化 Prompt 优化）。详细代码和每日任务见 [每日计划](./phase-2-daily-plan.md#week-7---高级-prompt-技术)。
+**本周学什么（一句话概览）：** Self-Consistency（多次采样投票）、**ReAct 模式**（Thought→Action→Observation 循环，Agent 的基石）、Chain Prompting（多步串联）、ToT / Reflexion（树形搜索 + 反思重试）、DSPy 入门（程序化 Prompt 优化）。详细代码和每日任务见 [每日计划](./phase-2-daily-plan.md#week-3---高级-prompt-技术)。
 
 ### 产出物
 
@@ -179,7 +179,7 @@
 - **没有评测，就无法上线** — 生产环境需要质量保证
 - **很多前端转 AI 的人直接跳到 LangChain 写代码，结果做出来的东西质量不可控，原因就是没学评测**
 
-**本周学什么（一句话概览）：** 评测集构建（golden set/rubric、20+ 条起步）、三种评测方法（规则匹配 / LLM-as-Judge / 人工标注）、Promptfoo / LangSmith 工具实操、A/B 回归测试、至少 3 轮 Prompt 迭代并记录数据。详细代码和每日任务见 [每日计划](./phase-2-daily-plan.md#week-8---评测驱动开发分水岭)。
+**本周学什么（一句话概览）：** 评测集构建（golden set/rubric、20+ 条起步）、三种评测方法（规则匹配 / LLM-as-Judge / 人工标注）、Promptfoo / LangSmith 工具实操、A/B 回归测试、至少 3 轮 Prompt 迭代并记录数据。详细代码和每日任务见 [每日计划](./phase-2-daily-plan.md#week-4---评测驱动开发分水岭)。
 
 ### 产出物
 
