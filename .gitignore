@@ -87,3 +87,12 @@ qdrant_data/
 # ===== 学习产出（大文件 / 个人数据）=====
 notes/private/
 *.local
+
+# 忽略智能体生成的目录
+**/superpowers
+.zcode
+.codex
+.Codex
+.trae
+.cursor
+.playwright-mcp
