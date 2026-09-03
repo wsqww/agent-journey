@@ -46,6 +46,10 @@ yarn-error.log*
 pnpm-debug.log*
 .pnpm-store/
 
+# VitePress（学习网站）构建缓存
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+
 # ===== 环境变量与密钥（绝不入库）=====
 .env
 .env.*

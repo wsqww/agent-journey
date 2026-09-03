@@ -1,0 +1,138 @@
+/* 学习进度组件样式 —— 跟随 VitePress 主题变量，自动适配明暗模式。 */
+
+/* 顶栏进度条整体容器 */
+.aj-progress {
+  position: relative;
+  margin-left: 12px;
+}
+
+/* 进度条触发按钮（条 + 数字） */
+.aj-progress-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px 2px;
+}
+
+/* 进度条外框 */
+.aj-progress-bar {
+  width: 72px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--vp-c-divider);
+  overflow: hidden;
+}
+
+/* 进度条填充 */
+.aj-progress-fill {
+  display: block;
+  height: 100%;
+  background: var(--vp-c-brand-1);
+  transition: width 0.3s ease;
+}
+
+/* 完成数文本 */
+.aj-progress-text {
+  font-size: 12px;
+  color: var(--vp-c-text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 展开的页面清单浮层 */
+.aj-progress-pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 340px;
+  max-height: 420px;
+  overflow-y: auto;
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  box-shadow: var(--vp-shadow-3);
+  padding: 8px;
+  z-index: 100;
+}
+
+/* 浮层标题 */
+.aj-progress-pop-title {
+  font-size: 12px;
+  color: var(--vp-c-text-3);
+  margin: 4px 8px 8px;
+}
+
+/* 清单条目 */
+.aj-progress-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 6px 8px;
+  border-radius: 6px;
+  color: var(--vp-c-text-1);
+  text-decoration: none;
+}
+
+.aj-progress-item:hover {
+  background: var(--vp-c-bg-soft);
+}
+
+/* 已完成条目：文字弱化 */
+.aj-progress-item.is-done {
+  color: var(--vp-c-text-3);
+}
+
+/* 当前页条目：左侧品牌色强调 */
+.aj-progress-item.is-current {
+  background: var(--vp-c-bg-soft);
+  box-shadow: inset 2px 0 0 var(--vp-c-brand-1);
+}
+
+/* 完成勾标记占位（未完成时保持对齐） */
+.aj-progress-check {
+  width: 14px;
+  flex: none;
+  color: var(--vp-c-brand-1);
+  font-weight: 600;
+}
+
+/* 页脚完成按钮容器 */
+.aj-complete {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 16px;
+  flex-wrap: wrap;
+}
+
+/* 标记完成按钮 */
+.aj-complete-btn {
+  border: 1px solid var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
+  background: transparent;
+  border-radius: 20px;
+  padding: 4px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.aj-complete-btn:hover {
+  background: var(--vp-c-brand-soft);
+}
+
+/* 已完成态：实心品牌色 */
+.aj-complete-btn.is-done {
+  background: var(--vp-c-brand-1);
+  color: var(--vp-button-brand-text);
+}
+
+/* 按钮旁提示文字 */
+.aj-complete-hint {
+  font-size: 12px;
+  color: var(--vp-c-text-3);
+}

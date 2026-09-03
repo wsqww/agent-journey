@@ -1,0 +1,14 @@
+{
+  "name": "agent-journey-site",
+  "private": true,
+  "type": "module",
+  "description": "学习路线文档站的构建配置（VitePress）。内容唯一来源是 docs/ 下的 markdown，本包只是渲染层。",
+  "scripts": {
+    "site:dev": "vitepress dev docs",
+    "site:build": "vitepress build docs",
+    "site:preview": "vitepress preview docs"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.3"
+  }
+}
